@@ -10,7 +10,7 @@ import math
 from typing import Any, Dict, List, Union
 
 # Configure the API key
-api_key = 'AIzaSyAuuy457QvpMk9_AY3d3iOaIH-S03yhxFQ'
+api_key = 'AIzaSyBXC_o3DTYBLbVBOLoQHCOQtXVA_DCqp-o'
 genai.configure(api_key=api_key)
 
 app = FastAPI()
