@@ -1,0 +1,11 @@
+streamlit
+pandas
+Pillow
+matplotlib
+google-generativeai
+imagekitio
+requests
+fastapi
+uvicorn
+python-multipart
+jsonschema
