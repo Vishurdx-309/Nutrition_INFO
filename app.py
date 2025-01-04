@@ -22,6 +22,84 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def detect_blur(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+    return laplacian_var < 100  # Threshold for blur detection
+
+def sharpen_image(image):
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+    img= cv2.filter2D(image, -1, kernel)
+    return img
+def detect_contrast(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    min_val, max_val = np.min(gray), np.max(gray)
+    return (max_val - min_val) < 50  # Threshold for low contrast
+
+def improve_contrast(image):
+    img=cv2.equalizeHist(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
+    return img
+def detect_noise(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    std_dev = np.std(gray)
+    return std_dev > 50  # Threshold for noise detection
+
+def denoise_image(image):
+    img=cv2.fastNlMeansDenoisingColored(image, None, 30, 30, 7, 21)
+    return img
+def detect_skew(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 150)
+    lines = cv2.HoughLines(edges, 1, np.pi/180, 200)
+    if lines is not None:
+        for rho, theta in lines[0]:
+            angle = (theta - np.pi/2) * 180 / np.pi
+            return abs(angle) > 5  # Skew threshold (5 degrees)
+    return False
+
+def deskew_image(image, angle):
+    (h, w) = image.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    img=cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    return img
+def detect_binarization_needed(image):
+    # Calculate standard deviation in grayscale; high deviation suggests multi-colored text.
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return np.std(gray) > 70  # Threshold for multi-color or complicated text
+
+def binarize_image(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    img=cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV)[1]
+    return img
+def preprocess_image(image):
+    # Step 1: Check if the image is blurry
+    if detect_blur(image):
+        #print("Blurry image detected. Applying sharpening.")
+        image = sharpen_image(image)
+
+    # Step 2: Check if the image has low contrast
+    if detect_contrast(image):
+        #print("Low contrast detected. Applying contrast enhancement.")
+        image = improve_contrast(image)
+
+    # Step 3: Check if the image is noisy
+    if detect_noise(image):
+        #print("Noise detected. Applying denoising.")
+        image = denoise_image(image)
+
+    # Step 4: Check if the image is skewed
+    if detect_skew(image):
+        #print("Skew detected. Applying deskewing.")
+        image = deskew_image(image, angle=detect_skew_angle(image))
+
+    # Step 5: Check if binarization is needed
+    if detect_binarization_needed(image):
+        #print("Binarization needed. Applying binarization.")
+        image = binarize_image(image)
+
+    return image
+
 def sanitize_float_values(obj: Any) -> Any:
     """Sanitize float values to ensure JSON compatibility."""
     if isinstance(obj, float):
