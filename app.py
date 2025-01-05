@@ -44,7 +44,8 @@ def get_nutrition_and_ingredients(sample_file):
     model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest")
     response = model.generate_content([
         sample_file,
-        """Extract all the details regarding nutrients and ingredients shown in the given image and give me response in the format of valid JSON string Object where Nutrient:(given nutrient) and Ingredients:(given ingredients) and only these two things and only JSON response ,no other thing. like as follows:
+        """Extract all the details regarding nutrients and ingredients shown in the given image and give me response in the format of valid JSON string Object where Nutrient and Ingredients according to the image and only these two things and only JSON response ,no other thing. 
+            return in the same format as in the example given below. Dont return the same details just keep the format same:
         {
             {
             "Nutrients": {
